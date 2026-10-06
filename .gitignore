@@ -1,0 +1,15 @@
+node_modules/
+dist/
+*.bun-build
+*.tsbuildinfo
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Build + security-scan artifacts
+sbom.cdx.json
+
+# Local coding-agent runtime state (e.g. Claude Code); committed config stays tracked
+.claude/scheduled_tasks.lock
+.claude/worktrees/

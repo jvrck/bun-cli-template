@@ -1,0 +1,44 @@
+# OPT-IN TIER — inert here. To enable, copy this file to
+# .github/workflows/e2e.yml (see optional/README.md).
+#
+# Local binary lifecycle smoke on every PR: build the dev binary and run the
+# shared release smoke against it. Extend the smoke as your engine grows.
+name: E2E
+
+on:
+  pull_request:
+    branches: [main, "epic/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  binary-smoke:
+    name: Binary lifecycle smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6.1.0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.9'
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - name: Run lifecycle smoke
+        env:
+          MYTOOL_BIN: ${{ github.workspace }}/dist/mytool
+          EXPECTED_VERSION: 0.0.0-dev
+          MYTOOL_SMOKE_ROOT: ${{ runner.temp }}/mytool-local-smoke
+          MYTOOL_SMOKE_DIAG_DIR: ${{ runner.temp }}/diagnostics/local
+        run: scripts/smoke-release-asset.sh
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: e2e-local-binary-diagnostics
+          path: |
+            ${{ runner.temp }}/diagnostics/local
+            ${{ runner.temp }}/mytool-local-smoke
+          if-no-files-found: ignore
+          retention-days: 14
